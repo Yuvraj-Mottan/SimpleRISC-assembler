@@ -93,9 +93,7 @@ uint32_t encodeJ(string opcode,int offset){
     uint32_t val = 0;
 
     val |= (op << 27);
-
-    // supports negative offsets correctly
-    val |= (offset & 0x07FFFFFF);
+    val |= (offset & 0x07FFFFFF); // supports negative
 
     return val;
 }
@@ -138,7 +136,9 @@ int main(){
 
     while(getline(file,line)){
 
-        if(line.empty()) continue;
+        // skip whitespace-only lines
+        if(line.find_first_not_of(" \t\r\n") == string::npos)
+            continue;
 
         stringstream ss(line);
         string first;
@@ -165,7 +165,13 @@ int main(){
 
     while(getline(file,line)){
 
-        if(line.empty()) continue;
+        if(line.find_first_not_of(" \t\r\n") == string::npos)
+            continue;
+
+        // 🔥 Replace commas with space
+        for(char &c : line){
+            if(c == ',') c = ' ';
+        }
 
         stringstream ss(line);
 
@@ -177,10 +183,10 @@ int main(){
             ss >> opcode;
         }
 
-        // if(!instructionSet.count(opcode)){
-        //     cout<<"Invalid instruction: "<<opcode<<endl;
-        //     continue;
-        // }
+        if(!instructionSet.count(opcode)){
+            cout<<"Invalid instruction: "<<opcode<<endl;
+            continue;
+        }
 
         instruction ins = instructionSet[opcode];
 
@@ -232,7 +238,7 @@ int main(){
             out << toBinary(machine) << endl;
         }
 
-        /* ===== 1 OPERAND (BRANCH / JUMP) ===== */
+        /* ===== 1 OPERAND (BRANCH) ===== */
         else if(ins.addressNo == 1){
 
             ss >> arg1;
@@ -243,7 +249,7 @@ int main(){
                 int target = labelIndex[arg1];
                 int current = address * 4;
 
-                offset = (target - current) / 4;   // 🔥 correct offset
+                offset = (target - current) / 4;
             }
             else{
                 offset = stoi(arg1);
@@ -264,7 +270,7 @@ int main(){
 
         address++;
     }
-    
+
     /* ================= SYMBOL TABLE ================= */
 
     cout<<"\nSymbol Table:\n";
